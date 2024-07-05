@@ -1,0 +1,21 @@
+#categoriesTree {
+  padding: 20px;
+  background-color: #f7f7f8; /* Match ChatGPT color scheme */
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+#categoriesTree h2 {
+  color: #333; /* Match ChatGPT color scheme */
+  margin-bottom: 10px;
+  font-size: 24px;
+}
+
+#categoriesTree h3 {
+  color: #444; /* Match ChatGPT color scheme */
+  margin-bottom: 5px;
+}
+
+#categoriesTree li {
+  color: #555; /* Match ChatGPT color scheme */
+}
