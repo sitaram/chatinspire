@@ -1,20 +1,21 @@
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('ChatStarter installed');
+  console.log('ChatInspire installed');
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log('listener');
-  if (message.action === 'fetchTopics') {
-    fetchTopics(message.toggles).then((response) => {
+  console.log('addListener', message, sender);
+  if (message.action === 'injectPrompt') {
+    injectPrompt(message.toggles).then((response) => {
       sendResponse({ categories: parseCategories(response) });
     });
     return true;
   }
 });
 
-async function fetchTopics(toggles) {
-  console.log('fetchTopics', toggles);
+async function injectPrompt(toggles) {
+  console.log('injectPrompt', toggles);
 
+  // Prepare the base prompt and adjust based on toggles
   let basePrompt =
     'Go through my chat history and come up with a long list of topics that are relevant starting points for another discussion we can have right now. Categorize them into high-level categories. Under each category, using the topics, come up with a couple of imaginative and exploratory suggestions that initiate good conversations.';
 
@@ -33,25 +34,31 @@ async function fetchTopics(toggles) {
       ' Provide suggestions that delve deeper into creative and adventurous areas, pushing the boundaries of conventional ideas. These suggestions should encourage innovative thinking and exploration beyond the usual scope. Ensure the results are notably distinct from less exploratory suggestions.';
   }
 
-  console.log(basePrompt);
+  try {
+    const response = await fetch('https://api.openai.com/v1/engines/davinci/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer YOUR_OPENAI_API_KEY`,
+      },
+      body: JSON.stringify({
+        prompt: basePrompt,
+        max_tokens: 1500,
+      }),
+    });
 
-  const response = await fetch('https://api.openai.com/v1/engines/davinci/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer YOUR_OPENAI_API_KEY`,
-    },
-    body: JSON.stringify({
-      prompt: basePrompt,
-      max_tokens: 1500,
-    }),
-  });
-  console.log(response);
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
 
-  const data = await response.json();
-  const choices = data.choices && data.choices[0] ? data.choices[0].text : 'NO DATA';
-  console.log(choices);
-  return choices;
+    const data = await response.json();
+    const choices = data.choices && data.choices[0] ? data.choices[0].text : 'NO DATA';
+    console.log(choices);
+    return choices;
+  } catch (error) {
+    console.error('Error fetching topics:', error);
+    return 'NO DATA';
+  }
 }
 
 function parseCategories(responseText) {
