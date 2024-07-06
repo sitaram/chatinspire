@@ -1,14 +1,41 @@
 console.log('ChatInspire root');
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log('ChatInspire addListener', message); // Add logging to verify listener is set
-  if (message.action === 'injectPrompt' && window.location.href.includes('https://chatgpt.com/?model=')) {
-    injectPrompt(message.toggles).then((response) => {
-      sendResponse({ categories: parseCategories(response) });
-    });
-    return true;
-  }
-});
+function initChatInspire() {
+  console.log('ChatInspire initialized');
+
+  const checkElements = setInterval(() => {
+    const chatInputBox = document.querySelector('#prompt-textarea');
+    const submitButton = chatInputBox?.parentNode?.parentNode?.querySelector('.rounded-full');
+
+    if (chatInputBox && submitButton) {
+      clearInterval(checkElements);
+      console.log('ChatInspire elements found');
+
+      chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+        console.log('ChatInspire addListener', message); // Add logging to verify listener is set
+        if (message.action === 'injectPrompt' && window.location.href.includes('https://chatgpt.com/?model=')) {
+          injectPrompt(message.toggles).then((response) => {
+            sendResponse({ categories: parseCategories(response) });
+          });
+          return true;
+        }
+      });
+
+      // Automatically trigger the injection on page load
+      injectPrompt({ personalized: true, futureTrends: true, exploratory: true })
+        .then(response => {
+          displayCategories(parseCategories(response));
+        })
+        .catch(error => {
+          console.error('Error during automatic injection:', error);
+        });
+    } else {
+      console.log('ChatInspire elements not found yet');
+    }
+  }, 100); // Check every 100ms until elements are found
+}
+
+window.onload = initChatInspire;
 
 async function injectPrompt(toggles) {
   console.log('ChatInspire injectPrompt');

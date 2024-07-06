@@ -5,8 +5,9 @@
   "permissions": ["activeTab", "scripting", "storage"],
   "content_scripts": [
     {
-      "matches": ["https://chatgpt.com/?model=gpt-4o"],
-      "js": ["content.js"]
+      "matches": ["https://chatgpt.com/?model=*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
     }
   ],
   "action": {
