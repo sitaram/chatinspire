@@ -1,12 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('addEventListener DOMContentLoaded');
-  chrome.runtime.sendMessage({ action: 'injectPrompt', toggles: { personalized: false, futureTrends: false, exploratory: false } }, (response) => {
-    displayCategories(response.categories);
+  document.getElementById('testButton').addEventListener('click', () => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      chrome.tabs.sendMessage(tabs[0].id, { action: 'injectPrompt', toggles: { personalized: true, futureTrends: true, exploratory: true } });
+    });
   });
 });
-
-function displayCategories(categories) {
-  console.log('displayCategories', categories);
-  const treeContainer = document.getElementById('categoriesTree');
-  treeContainer.innerText = categories;
-}

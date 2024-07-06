@@ -1,5 +1,7 @@
+console.log('ChatInspire root');
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log('ChatInspire addListener', message, sender);
+  console.log('ChatInspire addListener', message); // Add logging to verify listener is set
   if (message.action === 'injectPrompt' && window.location.href.includes('https://chatgpt.com/?model=')) {
     injectPrompt(message.toggles).then((response) => {
       sendResponse({ categories: parseCategories(response) });
@@ -28,8 +30,12 @@ async function injectPrompt(toggles) {
       ' Provide suggestions that delve deeper into creative and adventurous areas, pushing the boundaries of conventional ideas. These suggestions should encourage innovative thinking and exploration beyond the usual scope. Ensure the results are notably distinct from less exploratory suggestions.';
   }
 
-  const chatInputBox = document.querySelector('textarea');
-  const submitButton = chatInputBox.closest('form').querySelector('button[type="submit"]');
+  await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait for elements to load
+
+  const chatInputBox = document.querySelector('#prompt-textarea');
+  console.log('chatInputBox', chatInputBox);
+  const submitButton = chatInputBox.parentNode.parentNode.querySelector('.rounded-full');
+  console.log('submitButton', submitButton);
 
   if (chatInputBox && submitButton) {
     chatInputBox.value = basePrompt;
@@ -63,7 +69,9 @@ function parseCategories(responseText) {
 
 function displayCategories(categories) {
   console.log('ChatInspire displayCategories');
-  const mainContainer = document.querySelector('.main-container'); // Adjust the selector as needed
+  const mainContainer = document.querySelector('.group/conversation-turn');
+  console.log('mainContainer', mainContainer);
+
   if (mainContainer) {
     const categoriesDiv = document.createElement('div');
     categoriesDiv.id = 'categoriesTree';
@@ -120,8 +128,10 @@ function displayCategories(categories) {
         topicItem.style.cursor = 'pointer';
 
         topicItem.addEventListener('click', () => {
-          const chatInputBox = document.querySelector('textarea');
-          const submitButton = chatInputBox.closest('form').querySelector('button[type="submit"]');
+          const chatInputBox = document.querySelector('#prompt-textarea');
+          console.log('chatInputBox', chatInputBox);
+          const submitButton = chatInputBox.parentNode.parentNode.querySelector('.rounded-full');
+          console.log('submitButton', submitButton);
 
           if (chatInputBox && submitButton) {
             chatInputBox.value = topic;
@@ -159,5 +169,3 @@ function updateSuggestions() {
     displayCategories(parseCategories(response));
   });
 }
-
-console.log('ChatInspire root');
