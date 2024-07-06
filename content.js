@@ -8,7 +8,7 @@ function initChatInspire() {
   const targetNode = document.body;
   const config = { childList: true, subtree: true };
 
-  const callback = function(mutationsList, observer) {
+  const callback = function (mutationsList, observer) {
     for (let mutation of mutationsList) {
       if (mutation.type === 'childList' && !isInjectionActive) {
         const logoElement = document.querySelector('svg.h-12.w-12[role="img"]');
@@ -56,9 +56,11 @@ function createPlaceholderDiv() {
     const categoriesDiv = document.createElement('div');
     categoriesDiv.id = 'categoriesTree';
     categoriesDiv.style.padding = '20px';
-    categoriesDiv.style.backgroundColor = '#f7f7f8'; // Match ChatGPT color scheme
-    categoriesDiv.style.borderRadius = '8px';
-    categoriesDiv.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)';
+    categoriesDiv.style.marginTop = '20px';
+    categoriesDiv.style.color = 'rgba(103, 103, 103, 1)';
+    categoriesDiv.style.border = '1px solid rgb(54, 54, 54)'; // rgb(54, 54, 54) in dark mode, #ddd in light mode
+    categoriesDiv.style.borderRadius = '16px';
+    categoriesDiv.style.boxShadow = '0 0 2px 0 rgba(0,0,0,.05), 0 4px 6px 0 rgba(0,0,0,.02)';
     categoriesDiv.innerText = 'Loading ChatInspire suggestions...';
 
     logoElement.parentNode.insertBefore(categoriesDiv, logoElement.nextSibling);
@@ -77,13 +79,14 @@ function injectPromptInIframe(iframe) {
       console.log('ChatInspire elements found in iframe');
 
       injectPrompt({ personalized: true, futureTrends: true, exploratory: true }, iframeDocument)
-        .then(response => {
+        .then((response) => {
+          console.log('response', response);
           displayCategories(parseCategories(response));
           // Remove the iframe after the injection is complete
           document.body.removeChild(iframe);
           isInjectionActive = false;
         })
-        .catch(error => {
+        .catch((error) => {
           console.error('Error during automatic injection in iframe:', error);
           // Remove the iframe and reset the flag on error
           document.body.removeChild(iframe);
@@ -126,7 +129,8 @@ function injectPrompt(toggles, document) {
 
       const observer = new MutationObserver((mutations, obs) => {
         const responseContainer = document.querySelector('.group.conversation-turn');
-        if (responseContainer && responseContainer.textContent.includes('System Design and Interviews')) { // Adjust the condition as needed
+        if (responseContainer && responseContainer.textContent.includes('System Design and Interviews')) {
+          // Adjust the condition as needed
           obs.disconnect();
           resolve(responseContainer.textContent);
         }
@@ -239,10 +243,11 @@ function updateSuggestions() {
   };
 
   const iframe = document.querySelector('iframe');
-  injectPrompt({ personalized: toggles.personalized, futureTrends: toggles.futureTrends, exploratory: toggles.exploratory }, iframe.contentDocument)
-    .then(response => {
+  injectPrompt({ personalized: toggles.personalized, futureTrends: toggles.futureTrends, exploratory: toggles.exploratory }, iframe.contentDocument).then(
+    (response) => {
       displayCategories(parseCategories(response));
-    });
+    }
+  );
 }
 
 initChatInspire();

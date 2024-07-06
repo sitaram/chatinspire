@@ -1,11 +1,12 @@
 {
   "manifest_version": 3,
   "name": "ChatInspire",
+  "description": "Inspire imaginative and exploratory ChatGPT conversations based on your chat history.",
   "version": "1.0",
   "permissions": ["activeTab", "scripting", "storage"],
   "content_scripts": [
     {
-      "matches": ["https://chatgpt.com/?model=*"],
+      "matches": ["https://chatgpt.com/?model=*", "https://chatgpt.com/"],
       "js": ["content.js"],
       "run_at": "document_idle"
     }
