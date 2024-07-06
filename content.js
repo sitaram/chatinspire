@@ -1,8 +1,6 @@
-console.log('content root');
-
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log('content addListener', message, sender);
-  if (message.action === 'injectPrompt' && window.location.href.includes('https://chat.openai.com/?model=')) {
+  console.log('ChatInspire addListener', message, sender);
+  if (message.action === 'injectPrompt' && window.location.href.includes('https://chatgpt.com/?model=')) {
     injectPrompt(message.toggles).then((response) => {
       sendResponse({ categories: parseCategories(response) });
     });
@@ -11,7 +9,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 async function injectPrompt(toggles) {
-  console.log('content injectPrompt', toggles);
+  console.log('ChatInspire injectPrompt');
   let basePrompt =
     'Go through my chat history and come up with a long list of topics that are relevant starting points for another discussion we can have right now. Categorize them into high-level categories. Under each category, using the topics, come up with a couple of imaginative and exploratory suggestions that initiate good conversations.';
 
@@ -56,8 +54,7 @@ async function injectPrompt(toggles) {
 }
 
 function parseCategories(responseText) {
-  // Implement your parsing logic here
-  // This is a placeholder function
+  console.log('ChatInspire parseCategories');
   return responseText.split('\n\n').map((section) => {
     const [category, ...topics] = section.split('\n').filter(Boolean);
     return { category, topics };
@@ -65,6 +62,7 @@ function parseCategories(responseText) {
 }
 
 function displayCategories(categories) {
+  console.log('ChatInspire displayCategories');
   const mainContainer = document.querySelector('.main-container'); // Adjust the selector as needed
   if (mainContainer) {
     const categoriesDiv = document.createElement('div');
@@ -150,13 +148,16 @@ function displayCategories(categories) {
 }
 
 function updateSuggestions() {
+  console.log('ChatInspire updateSuggestions');
   const toggles = {
     personalized: document.getElementById('togglePersonalized').checked,
     futureTrends: document.getElementById('toggleFutureTrends').checked,
     exploratory: document.getElementById('toggleExploratory').checked,
   };
 
-  chrome.runtime.sendMessage({ action: 'injectPrompt', toggles }, (response) => {
-    displayCategories(response.categories);
+  injectPrompt(toggles).then((response) => {
+    displayCategories(parseCategories(response));
   });
 }
+
+console.log('ChatInspire root');
