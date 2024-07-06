@@ -17,6 +17,7 @@ function initChatInspire() {
           isInjectionActive = true;
           observer.disconnect();
           createInvisibleIframe();
+          createPlaceholderDiv();
           return;
         }
       }
@@ -47,6 +48,21 @@ function createInvisibleIframe() {
   };
 
   document.body.appendChild(iframe);
+}
+
+function createPlaceholderDiv() {
+  const logoElement = document.querySelector('svg.h-12.w-12[role="img"]');
+  if (logoElement) {
+    const categoriesDiv = document.createElement('div');
+    categoriesDiv.id = 'categoriesTree';
+    categoriesDiv.style.padding = '20px';
+    categoriesDiv.style.backgroundColor = '#f7f7f8'; // Match ChatGPT color scheme
+    categoriesDiv.style.borderRadius = '8px';
+    categoriesDiv.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)';
+    categoriesDiv.innerText = 'Loading ChatInspire suggestions...';
+
+    logoElement.parentNode.insertBefore(categoriesDiv, logoElement.nextSibling);
+  }
 }
 
 function injectPromptInIframe(iframe) {
@@ -133,16 +149,10 @@ function parseCategories(responseText) {
 
 function displayCategories(categories) {
   console.log('ChatInspire displayCategories');
-  const logoElement = document.querySelector('svg.h-12.w-12[role="img"]');
-  console.log('logoElement', logoElement);
+  const categoriesDiv = document.getElementById('categoriesTree');
 
-  if (logoElement) {
-    const categoriesDiv = document.createElement('div');
-    categoriesDiv.id = 'categoriesTree';
-    categoriesDiv.style.padding = '20px';
-    categoriesDiv.style.backgroundColor = '#f7f7f8'; // Match ChatGPT color scheme
-    categoriesDiv.style.borderRadius = '8px';
-    categoriesDiv.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)';
+  if (categoriesDiv) {
+    categoriesDiv.innerHTML = ''; // Clear the placeholder text
 
     const title = document.createElement('h2');
     title.innerText = 'ChatInspire';
@@ -213,7 +223,6 @@ function displayCategories(categories) {
     });
 
     categoriesDiv.appendChild(categoriesList);
-    logoElement.parentNode.insertBefore(categoriesDiv, logoElement.nextSibling);
 
     document.getElementById('togglePersonalized').addEventListener('change', updateSuggestions);
     document.getElementById('toggleFutureTrends').addEventListener('change', updateSuggestions);
