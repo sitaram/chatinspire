@@ -3,41 +3,74 @@ console.log('ChatInspire root');
 function initChatInspire() {
   console.log('ChatInspire initialized');
 
+  const targetNode = document.body;
+  const config = { childList: true, subtree: true };
+
+  const callback = function(mutationsList, observer) {
+    for (let mutation of mutationsList) {
+      if (mutation.type === 'childList') {
+        const logoElement = document.querySelector('svg.h-12.w-12[role="img"]');
+        if (logoElement) {
+          console.log('ChatInspire logo found');
+          observer.disconnect();
+          createInvisibleIframe();
+          return;
+        }
+      }
+    }
+  };
+
+  const observer = new MutationObserver(callback);
+  observer.observe(targetNode, config);
+
+  // Reconnect the observer if it's disconnected
+  setInterval(() => {
+    if (observer && !observer.takeRecords().length) {
+      observer.observe(targetNode, config);
+    }
+  }, 1000);
+}
+
+function createInvisibleIframe() {
+  const iframe = document.createElement('iframe');
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = 'none';
+  iframe.src = 'https://chatgpt.com/?model=gpt-4o'; // Change URL to your ChatGPT page
+
+  iframe.onload = () => {
+    console.log('ChatInspire iframe loaded');
+    injectPromptInIframe(iframe);
+  };
+
+  document.body.appendChild(iframe);
+}
+
+function injectPromptInIframe(iframe) {
+  const iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
+
   const checkElements = setInterval(() => {
-    const chatInputBox = document.querySelector('#prompt-textarea');
+    const chatInputBox = iframeDocument.querySelector('#prompt-textarea');
     const submitButton = chatInputBox?.parentNode?.parentNode?.querySelector('.rounded-full');
 
     if (chatInputBox && submitButton) {
       clearInterval(checkElements);
-      console.log('ChatInspire elements found');
+      console.log('ChatInspire elements found in iframe');
 
-      chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-        console.log('ChatInspire addListener', message); // Add logging to verify listener is set
-        if (message.action === 'injectPrompt' && window.location.href.includes('https://chatgpt.com/?model=')) {
-          injectPrompt(message.toggles).then((response) => {
-            sendResponse({ categories: parseCategories(response) });
-          });
-          return true;
-        }
-      });
-
-      // Automatically trigger the injection on page load
-      injectPrompt({ personalized: true, futureTrends: true, exploratory: true })
+      injectPrompt({ personalized: true, futureTrends: true, exploratory: true }, iframeDocument)
         .then(response => {
           displayCategories(parseCategories(response));
         })
         .catch(error => {
-          console.error('Error during automatic injection:', error);
+          console.error('Error during automatic injection in iframe:', error);
         });
     } else {
-      console.log('ChatInspire elements not found yet');
+      console.log('ChatInspire elements not found in iframe yet');
     }
   }, 100); // Check every 100ms until elements are found
 }
 
-window.onload = initChatInspire;
-
-async function injectPrompt(toggles) {
+function injectPrompt(toggles, document) {
   console.log('ChatInspire injectPrompt');
   let basePrompt =
     'Go through my chat history and come up with a long list of topics that are relevant starting points for another discussion we can have right now. Categorize them into high-level categories. Under each category, using the topics, come up with a couple of imaginative and exploratory suggestions that initiate good conversations.';
@@ -57,33 +90,28 @@ async function injectPrompt(toggles) {
       ' Provide suggestions that delve deeper into creative and adventurous areas, pushing the boundaries of conventional ideas. These suggestions should encourage innovative thinking and exploration beyond the usual scope. Ensure the results are notably distinct from less exploratory suggestions.';
   }
 
-  await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait for elements to load
+  return new Promise((resolve, reject) => {
+    const chatInputBox = document.querySelector('#prompt-textarea');
+    const submitButton = chatInputBox.parentNode.parentNode.querySelector('.rounded-full');
 
-  const chatInputBox = document.querySelector('#prompt-textarea');
-  console.log('chatInputBox', chatInputBox);
-  const submitButton = chatInputBox.parentNode.parentNode.querySelector('.rounded-full');
-  console.log('submitButton', submitButton);
+    if (chatInputBox && submitButton) {
+      chatInputBox.value = basePrompt;
+      chatInputBox.dispatchEvent(new Event('input', { bubbles: true }));
+      submitButton.click();
 
-  if (chatInputBox && submitButton) {
-    chatInputBox.value = basePrompt;
-    chatInputBox.dispatchEvent(new Event('input', { bubbles: true }));
-    submitButton.click();
-
-    return new Promise((resolve) => {
-      const observer = new MutationObserver(() => {
-        const responseContainer = document.querySelector('.response-container'); // Adjust the selector as needed
-        if (responseContainer && responseContainer.textContent.includes('System Design and Interviews')) {
-          // Adjust the condition as needed
-          observer.disconnect();
+      const observer = new MutationObserver((mutations, obs) => {
+        const responseContainer = document.querySelector('.group.conversation-turn');
+        if (responseContainer && responseContainer.textContent.includes('System Design and Interviews')) { // Adjust the condition as needed
+          obs.disconnect();
           resolve(responseContainer.textContent);
         }
       });
 
       observer.observe(document.body, { childList: true, subtree: true });
-    });
-  } else {
-    throw new Error('Chat input box or submit button not found.');
-  }
+    } else {
+      reject('Chat input box or submit button not found.');
+    }
+  });
 }
 
 function parseCategories(responseText) {
@@ -96,10 +124,10 @@ function parseCategories(responseText) {
 
 function displayCategories(categories) {
   console.log('ChatInspire displayCategories');
-  const mainContainer = document.querySelector('.group/conversation-turn');
-  console.log('mainContainer', mainContainer);
+  const logoElement = document.querySelector('svg.h-12.w-12[role="img"]');
+  console.log('logoElement', logoElement);
 
-  if (mainContainer) {
+  if (logoElement) {
     const categoriesDiv = document.createElement('div');
     categoriesDiv.id = 'categoriesTree';
     categoriesDiv.style.padding = '20px';
@@ -176,7 +204,7 @@ function displayCategories(categories) {
     });
 
     categoriesDiv.appendChild(categoriesList);
-    mainContainer.insertBefore(categoriesDiv, mainContainer.firstChild);
+    logoElement.parentNode.insertBefore(categoriesDiv, logoElement.nextSibling);
 
     document.getElementById('togglePersonalized').addEventListener('change', updateSuggestions);
     document.getElementById('toggleFutureTrends').addEventListener('change', updateSuggestions);
@@ -192,7 +220,11 @@ function updateSuggestions() {
     exploratory: document.getElementById('toggleExploratory').checked,
   };
 
-  injectPrompt(toggles).then((response) => {
-    displayCategories(parseCategories(response));
-  });
+  const iframe = document.querySelector('iframe');
+  injectPrompt({ personalized: toggles.personalized, futureTrends: toggles.futureTrends, exploratory: toggles.exploratory }, iframe.contentDocument)
+    .then(response => {
+      displayCategories(parseCategories(response));
+    });
 }
+
+initChatInspire();
