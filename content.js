@@ -80,7 +80,7 @@ function injectPromptInIframe(iframe) {
 
       injectPrompt({ personalized: true, futureTrends: true, exploratory: true }, iframeDocument)
         .then((response) => {
-          console.log('response', response);
+          console.log('Response received from iframe:', response);
           displayCategories(parseCategories(response));
           // Remove the iframe after the injection is complete
           document.body.removeChild(iframe);
@@ -123,14 +123,17 @@ function injectPrompt(toggles, document) {
     const submitButton = chatInputBox.parentNode.parentNode.querySelector('.rounded-full');
 
     if (chatInputBox && submitButton) {
+      console.log('ChatInspire input box and submit button found');
       chatInputBox.value = basePrompt;
       chatInputBox.dispatchEvent(new Event('input', { bubbles: true }));
       submitButton.click();
+      console.log('ChatInspire prompt submitted');
 
       const observer = new MutationObserver((mutations, obs) => {
         const responseContainer = document.querySelector('.group.conversation-turn');
         if (responseContainer && responseContainer.textContent.includes('System Design and Interviews')) {
           // Adjust the condition as needed
+          console.log('ChatInspire response detected');
           obs.disconnect();
           resolve(responseContainer.textContent);
         }
@@ -215,6 +218,7 @@ function displayCategories(categories) {
             chatInputBox.value = topic;
             chatInputBox.dispatchEvent(new Event('input', { bubbles: true }));
             submitButton.click();
+            console.log(`Topic "${topic}" submitted`);
           }
         });
 
