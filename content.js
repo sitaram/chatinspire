@@ -1,5 +1,7 @@
 console.log('ChatInspire root');
 
+let isInjectionActive = false;
+
 function initChatInspire() {
   console.log('ChatInspire initialized');
 
@@ -8,10 +10,11 @@ function initChatInspire() {
 
   const callback = function(mutationsList, observer) {
     for (let mutation of mutationsList) {
-      if (mutation.type === 'childList') {
+      if (mutation.type === 'childList' && !isInjectionActive) {
         const logoElement = document.querySelector('svg.h-12.w-12[role="img"]');
         if (logoElement) {
           console.log('ChatInspire logo found');
+          isInjectionActive = true;
           observer.disconnect();
           createInvisibleIframe();
           return;
@@ -23,9 +26,9 @@ function initChatInspire() {
   const observer = new MutationObserver(callback);
   observer.observe(targetNode, config);
 
-  // Reconnect the observer if it's disconnected
+  // Reconnect the observer if it's disconnected and injection is not active
   setInterval(() => {
-    if (observer && !observer.takeRecords().length) {
+    if (!isInjectionActive) {
       observer.observe(targetNode, config);
     }
   }, 1000);
@@ -60,9 +63,15 @@ function injectPromptInIframe(iframe) {
       injectPrompt({ personalized: true, futureTrends: true, exploratory: true }, iframeDocument)
         .then(response => {
           displayCategories(parseCategories(response));
+          // Remove the iframe after the injection is complete
+          document.body.removeChild(iframe);
+          isInjectionActive = false;
         })
         .catch(error => {
           console.error('Error during automatic injection in iframe:', error);
+          // Remove the iframe and reset the flag on error
+          document.body.removeChild(iframe);
+          isInjectionActive = false;
         });
     } else {
       console.log('ChatInspire elements not found in iframe yet');
