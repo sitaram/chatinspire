@@ -1,14 +1,23 @@
 {
   "manifest_version": 3,
   "name": "ChatInspire",
-  "description": "Inspire imaginative and exploratory ChatGPT conversations based on your chat history.",
   "version": "1.0",
-  "permissions": ["activeTab", "scripting", "storage"],
+  "description": "A Chrome extension to enhance ChatGPT with imaginative and exploratory conversation starters based on your chat history.",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
   "content_scripts": [
     {
       "matches": ["https://chatgpt.com/?model=*", "https://chatgpt.com/"],
-      "js": ["content.js"],
-      "run_at": "document_idle"
+      "js": [
+        "constants.js",
+        "observer.js",
+        "iframe.js",
+        "prompt.js",
+        "ui.js",
+        "content.js"
+      ]
     }
   ],
   "action": {
@@ -18,5 +27,10 @@
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
   }
 }
